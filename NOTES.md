@@ -1,5 +1,18 @@
 # OS Development Notes
 
+## x86 BIOS Interrupts
+
+### INT 0x19
+
+Search for a bootable disk.
+
+### INT 0x13
+
+Disk access. AH register is used to choose the function. Returns status code in AH and success flag in CF (cleared on success). The list of functions is given as:
+
+- AH = 0x0 :: Reset disk system. Immediately go to the first sector on disk.
+- AH = 0x02 :: Read sectors into memory. AL contains number of sectors to read. CH contains low eight bits of cylinder number. CL sector number (bits 0-5). Bits 6-7 are for hard disks only. DH head number. DL drive number (bit 7 set for hard disks). ES:BX is for buffer to read sectors to.
+
 ## Bootloader (First Stage)
 
 - Are stored with the Master Boot Record (MBR).
