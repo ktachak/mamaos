@@ -14,8 +14,7 @@ start:  jmp loader                      ; Jump over OEM block
 ;       OEM Parameter block
 ;**************************************************
 
-times   0Bh-$+start db 0
-
+BPB_OEM                         db "MAMA OS "
 BPB_BYTES_PER_SECTOR:           dw 512
 BPB_SECTORS_PER_CLUSTER:        db 1
 BPB_RESERVED_SECTORS:           dw 1
@@ -43,7 +42,7 @@ msg     db      "Welcome to My Operating System!", 0
 ;*************************************************
 
 print:
-        lodsb
+        lodsb                   ; load next byte from string pointed by SI to AL
         or      al, al          ; al = current character
         jz      printdone       ; null terminator found
         mov     ah, 0eh         ; get next character
@@ -63,6 +62,9 @@ loader:
 
         mov     si, msg
         call    print
+
+        xor     ax, ax
+        int     0x12            ; Get the amount of KB from the BIOS
         
         cli                             ; Clear all interrupts
         hlt                             ; Halt the system
