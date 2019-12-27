@@ -31,7 +31,7 @@ BS_DRIVE_NUMBER:                db 0
 BS_UNUSED:                      db 0
 BS_EXT_BOOT_SIG:                db 0x29
 BS_SERIAL_NO:                   dd 0xa0a1a2a3
-BS_VOLUME_LABEL:                db "MOS FLOPPY"
+BS_VOLUME_LABEL:                db "MOS FLOPPY "
 BS_FILE_SYSTEM:                 db "FAT12   "
 
 msg     db      "Welcome to My Operating System!", 0
@@ -56,18 +56,32 @@ printdone:
 ;*************************************************
 
 loader:
-        xor     ax, ax          ; Setup segments to insure they are 0.
-        mov     ds, ax
+
+;*************************************************
+;       Reset the head to the start sector of a disk
+;***************************************************
+
+.reset:
+        mov     ah, 0           ; reset floppy disk function
+        mov     dl, 0           ; drive 0 is floppy drive
+        int     0x13            ; call BIOS
+        jc      .reset          ; if carry flag (CF) is set, there was an error. Try resetting again.
+
+        mov     ax, 0x1000      ; we are going to read sector into address 0x1000:0
         mov     es, ax
+        xor     bx, bx
 
-        mov     si, msg
-        call    print
+.read:
+        mov     ah, 0x02        ; function 2
+        mov     al, 1           ; read 1 sector
+        mov     ch, 1           ; we are reading the second sector past us, so its still on track 1
+        mov     cl, 2           ; sector to read (The second sector)
+        mov     dh, 0           ; head number
+        mov     dl, 0           ; drive number. Remember Drive 0 is floppy drive.
+        int     0x13            ; call BIOS - Read the sector
+        jc      .read           ; try again on error
 
-        xor     ax, ax
-        int     0x12            ; Get the amount of KB from the BIOS
-        
-        cli                             ; Clear all interrupts
-        hlt                             ; Halt the system
+        jmp     0x1000:0x0      ; jump to execute the sector!
 
 times   510 - ($-$$) db 0               ; Pad to fill 512 bytes.
 dw      0xAA55                          ; Boot signature
